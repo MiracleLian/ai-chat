@@ -1,62 +1,117 @@
-# 🤖 AI智能问答系统
+# 🤖 AI 智能问答系统
 
-大模型智能问答网页系统 —— 前后端分离架构，集成大语言模型实现AI对话。
+基于 **DeepSeek 大模型** 的智能问答网页系统，前后端分离架构，一键启动。
+
+## 效果预览
+
+- 💬 AI 对话（Markdown 渲染、代码高亮、历史记录）
+- 👤 用户注册 / 登录（JWT 认证）
+- 📋 对话历史管理（分页、批量删除）
+- ⚙️ 管理员在线配置（修改 API 参数即时生效，无需重启）
+- 🎨 现代化 UI（渐变色主题、加载动画、响应式布局）
 
 ## 项目架构
 
 ```
-AIchat_project/
-├── backend/                  # 后端服务 (FastAPI)
-│   ├── main.py              # 入口文件
-│   ├── requirements.txt     # Python依赖
-│   ├── .env                 # 环境变量配置
+ai-chat/
+├── backend/                     # FastAPI 后端
+│   ├── main.py                  # 入口，启动时自动创建管理员账号
+│   ├── requirements.txt         # Python 依赖
+│   ├── .env.example             # 环境变量模板（复制为 .env 填入自己的 Key）
 │   └── app/
-│       ├── database.py      # 数据库连接
-│       ├── models.py        # 数据模型 (User, ChatRecord)
-│       ├── schemas.py       # 请求/响应模型
-│       ├── crud.py          # 数据库操作
-│       ├── auth.py          # JWT认证
-│       ├── llm.py           # 大模型调用
+│       ├── database.py          # 数据库连接（SQLite）
+│       ├── models.py            # 数据模型（User / ChatRecord）
+│       ├── schemas.py           # 请求响应模型
+│       ├── crud.py              # 数据库操作
+│       ├── auth.py              # JWT 认证 + 管理员权限
+│       ├── config.py            # .env 读写，支持热更新
+│       ├── llm.py               # 大模型调用（Anthropic Messages API）
 │       └── routers/
-│           ├── auth.py      # 认证路由 (注册/登录/用户信息)
-│           └── chat.py      # 对话路由 (发送问题/历史/删除)
+│           ├── auth.py          # 认证路由（注册/登录/用户信息/管理员）
+│           ├── chat.py          # 对话路由（发送/历史/删除/批量删除/统计）
+│           └── admin.py         # 管理员配置路由（登录/查看/修改 AI 配置）
 │
-├── frontend/                 # 前端应用 (Vue3)
-│   ├── index.html
-│   ├── package.json
-│   ├── vite.config.js
-│   └── src/
-│       ├── main.js          # 入口
-│       ├── App.vue          # 根组件
-│       ├── api/index.js     # Axios封装 + 拦截器
-│       ├── stores/auth.js   # 认证状态管理
-│       ├── router/index.js  # 路由 + 守卫
-│       └── views/
-│           ├── Login.vue    # 登录页
-│           ├── Register.vue # 注册页
-│           ├── Chat.vue     # 对话页
-│           ├── History.vue  # 历史记录页
-│           └── UserInfo.vue # 个人信息页
-│
-└── docx_extracted/           # 需求文档
+└── frontend/                    # Vue3 前端
+    ├── package.json
+    ├── vite.config.js           # Vite 构建配置
+    └── src/
+        ├── main.js              # 入口（Element Plus 全局注册）
+        ├── App.vue              # 根组件（页面过渡动画）
+        ├── api/index.js         # Axios 封装（Token 拦截、401 自动登出）
+        ├── stores/auth.js       # 认证状态管理（sessionStorage）
+        ├── router/index.js      # 路由 + 守卫（未登录重定向）
+        └── views/
+            ├── Login.vue         # 登录页
+            ├── Register.vue      # 注册页
+            ├── Chat.vue          # 对话页（Markdown 渲染、重试、快捷提问）
+            ├── History.vue       # 历史记录（分页、批量删除、详情弹窗）
+            ├── UserInfo.vue      # 个人信息（对话统计、管理员面板）
+            └── AdminConfig.vue   # 管理员配置页（API 地址/密钥/模型/温度等）
 ```
 
 ## 技术栈
 
 | 层级 | 技术 |
 |------|------|
-| 前端 | Vue 3 + Vite + Element Plus + Vue Router + Axios |
-| 后端 | Python + FastAPI + Uvicorn |
-| 数据库 | SQLite（开发）/ MySQL（生产） |
-| 认证 | JWT (python-jose + passlib) |
-| AI集成 | OpenAI兼容API（硅基流动/DeepSeek/通义千问等） |
+| 前端 | Vue 3 + Vite + Element Plus + Vue Router 4 + Axios + Marked |
+| 后端 | Python 3.10+ + FastAPI + Uvicorn + SQLAlchemy |
+| 数据库 | SQLite（开发） |
+| 认证 | JWT（python-jose + passlib + bcrypt） |
+| AI 集成 | DeepSeek Anthropic Messages API（兼容 OpenAI/硅基流动等） |
 
-## 快速开始
+## 快速开始（一键启动）
 
-### 1. 后端启动
+### 1. 克隆项目
 
 ```bash
-# 进入后端目录
+git clone https://github.com/MiracleLian/ai-chat.git
+cd ai-chat
+```
+
+### 2. 配置环境变量
+
+```bash
+cd backend
+# 复制模板为 .env
+cp .env.example .env        # Linux/Mac
+copy .env.example .env       # Windows
+```
+
+编辑 `.env`，填入你的 AI API 密钥：
+
+```env
+# 必填：API 地址和密钥（支持 Anthropic Messages API 兼容接口）
+AI_API_URL=https://api.deepseek.com/anthropic/v1/messages
+AI_API_KEY=你的DeepSeek-API-Key    # 在这填入你的真实 Key
+AI_MODEL=DeepSeek-V4-pro
+
+# 可选：模型参数
+AI_TEMPERATURE=0.7        # 0=严谨, 1=创意
+AI_MAX_TOKENS=1024         # 回复最大长度
+AI_SYSTEM_PROMPT=你是一个智能助手
+
+# 可选：管理员密码（启动时自动创建 admin 账号）
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=请修改为你的密码
+```
+
+> 🔑 **如何获取 API Key？** 注册 [DeepSeek 开放平台](https://platform.deepseek.com/)，充值任意金额，打开 API Keys 页面复制。
+
+### 3. 构建前端（使用已提供的前端资源）
+
+如果你需要修改前端代码：
+
+```bash
+cd frontend
+npm install
+npm run build      # 构建到 dist/ 目录
+```
+
+> 如果你不需要修改前端，`frontend/dist/` 目录已经包含在仓库中，无需额外构建。（如果仓库不含 dist，则需本地构建一次）
+
+### 4. 启动后端
+
+```bash
 cd backend
 
 # 创建虚拟环境
@@ -67,73 +122,67 @@ venv\Scripts\activate        # Windows
 # 安装依赖
 pip install -r requirements.txt
 
-# 配置环境变量（修改 .env 文件中的 AI_API_KEY）
-# 至少需要配置 AI_API_KEY 才能启用真实AI对话
-
-# 启动后端服务
-uvicorn main:app --reload --port 8000
+# 一键启动（前后端合并，单端口）
+python main.py
 ```
 
-后端API文档：http://localhost:8000/docs
-
-### 2. 前端启动
-
-```bash
-# 进入前端目录
-cd frontend
-
-# 安装依赖
-npm install
-
-# 启动开发服务器
-npm run dev
-```
-
-前端访问：http://localhost:3000
-
-## AI模型配置
-
-编辑 `backend/.env` 文件：
-
-```env
-# 使用硅基流动免费API（推荐新手）
-AI_API_URL=https://api.siliconflow.cn/v1/chat/completions
-AI_API_KEY=你的API密钥
-AI_MODEL=Qwen/Qwen2.5-7B-Instruct
-
-# 使用DeepSeek
-# AI_API_URL=https://api.deepseek.com/v1/chat/completions
-# AI_API_KEY=你的API密钥
-# AI_MODEL=deepseek-chat
-
-# 使用通义千问
-# AI_API_URL=https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions
-# AI_API_KEY=你的API密钥
-# AI_MODEL=qwen-turbo
-```
-
-> 不配置AI_API_KEY时，系统会返回模拟回答，方便前端调试。
+打开浏览器访问 **http://127.0.0.1:8000**
 
 ## 功能清单
 
-- ✅ 用户注册（用户名/密码/邮箱校验）
-- ✅ 用户登录（JWT Token认证）
-- ✅ AI实时对话（消息气泡，思考状态提示）
-- ✅ 对话历史记录（分页、删除、批量删除）
-- ✅ 个人信息查看
-- ✅ 路由守卫（未登录自动跳转）
-- ✅ Token自动管理（请求拦截添加，401自动登出）
-- ✅ CORS跨域支持
-- ✅ 密码加密存储（bcrypt）
+| 功能 | 说明 |
+|------|------|
+| ✅ 用户注册 | 用户名 6-20 位 / 密码 8-20 位含字母+数字 / 邮箱可选 |
+| ✅ 用户登录 | JWT Token 认证，24 小时有效 |
+| ✅ 个人信息 | 对话统计、管理员标识、退出登录 |
+| ✅ AI 对话 | Markdown 渲染、代码高亮、一键重试、消息复制 |
+| ✅ 历史记录 | 分页查询、单条删除、批量删除、详情弹窗 |
+| ✅ 管理员配置 | 在线修改 API 地址/密钥/模型/温度/提示词，保存即时生效 |
+| ✅ 路由守卫 | 未登录自动跳转登录页，401 自动清除 Token |
+| ✅ 密码加密 | bcrypt 加密存储 |
 
-## API接口一览
+## API 接口一览
 
-| 方法 | 路径 | 说明 | 需Token |
-|------|------|------|---------|
-| POST | /api/auth/register | 用户注册 | ❌ |
-| POST | /api/auth/login | 用户登录 | ❌ |
-| GET  | /api/auth/me | 获取用户信息 | ✅ |
-| POST | /api/chat/send | 发送问题 | ✅ |
-| GET  | /api/chat/history | 获取历史记录（分页） | ✅ |
-| DELETE | /api/chat/{id} | 删除单条记录 | ✅ |
-| POST | /api/chat/batch-delete | 批量删除记录 | ✅ |
+| 方法 | 路径 | 说明 | Token |
+|------|------|------|-------|
+| POST | `/api/auth/register` | 用户注册 | ❌ |
+| POST | `/api/auth/login` | 用户登录 | ❌ |
+| GET | `/api/auth/me` | 获取用户信息 | ✅ |
+| POST | `/api/chat/send` | 发送问题 | ✅ |
+| GET | `/api/chat/history` | 历史记录（分页） | ✅ |
+| GET | `/api/chat/count` | 对话统计 | ✅ |
+| DELETE | `/api/chat/{id}` | 删除单条记录 | ✅ |
+| POST | `/api/chat/batch-delete` | 批量删除 | ✅ |
+| POST | `/api/admin/login` | 管理员验证 | ❌ |
+| GET | `/api/admin/config` | 获取 AI 配置 | ❌ |
+| PUT | `/api/admin/config` | 修改 AI 配置（热更新） | ❌ |
+| GET | `/api/admin/check` | 检查是否管理员 | ✅ |
+
+## 管理员功能
+
+对话页右上角点击 **⚙️** → 输入管理员账号密码 → 进入配置页面：
+
+- 修改 API 地址和密钥（切换不同 AI 服务商）
+- 调整模型温度（0=严谨 / 1=创意）
+- 修改系统提示词（自定义 AI 角色）
+- 保存后 **即时生效**，无需重启服务
+
+## 常见问题
+
+**Q: 启动后 AI 返回"模拟回答"？**
+A: 检查 `backend/.env` 中 `AI_API_KEY` 是否正确填入。
+
+**Q: 前端页面空白？**
+A: 确认 `frontend/dist/` 目录存在。若不存在，需执行 `cd frontend && npm install && npm run build`。
+
+**Q: 想用其他 AI 服务商？**
+A: 修改 `.env` 中的 `AI_API_URL` 和 `AI_MODEL` 即可，项目使用 Anthropic Messages API 格式，兼容 DeepSeek 等平台。
+
+**Q: 如何切换到 MySQL？**
+A: 修改 `.env` 中 `DATABASE_URL=mysql+pymysql://用户名:密码@localhost/数据库名`，并安装 `pip install pymysql`。
+
+## 开发环境要求
+
+- Python ≥ 3.10
+- Node.js ≥ 16
+- Windows / Linux / macOS
