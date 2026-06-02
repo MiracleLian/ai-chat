@@ -1,0 +1,53 @@
+# === 敏感信息 & 环境变量 ===
+.env
+*.env
+!.env.example
+
+# === Python ===
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# === 虚拟环境 ===
+venv/
+.venv/
+env/
+.conda/
+
+# === Node.js ===
+node_modules/
+dist/
+
+# === IDE ===
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# === 数据库 ===
+*.db
+*.sqlite
+*.sqlite3
+
+# === 系统文件 ===
+Thumbs.db
+.DS_Store
+Desktop.ini
+
+# === 临时文件 ===
+~$*
+*.tmp
+*.temp
+docx_extracted/
+
+# === 大文件 ===
+*.docx
+*.mp4
+
+# === Claude Code 本地设置（含历史命令，可能泄露密钥） ===
+.claude/settings.local.json
