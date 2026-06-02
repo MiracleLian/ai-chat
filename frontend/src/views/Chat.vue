@@ -168,8 +168,8 @@ async function handleAdminLogin() {
   }
   adminLoading.value = true
   try {
-    await api.post('/admin/login', { ...adminForm })
-    localStorage.setItem('admin_verified', '1')
+    const { data } = await api.post('/admin/login', { ...adminForm })
+    localStorage.setItem('admin_token', data.access_token)
     adminForm.username = ''
     adminForm.password = ''
     showAdminDialog.value = false

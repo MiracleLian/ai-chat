@@ -203,9 +203,9 @@ python main.py
 | GET | `/api/chat/count` | 对话统计 | ✅ |
 | DELETE | `/api/chat/{id}` | 删除单条记录 | ✅ |
 | POST | `/api/chat/batch-delete` | 批量删除 | ✅ |
-| POST | `/api/admin/login` | 管理员验证 | ❌ |
-| GET | `/api/admin/config` | 获取 AI 配置 | ❌ |
-| PUT | `/api/admin/config` | 修改 AI 配置（热更新） | ❌ |
+| POST | `/api/admin/login` | 管理员登录，返回 JWT | ❌ |
+| GET | `/api/admin/config` | 获取 AI 配置 | ✅ (admin) |
+| PUT | `/api/admin/config` | 修改 AI 配置（热更新） | ✅ (admin) |
 | GET | `/api/admin/check` | 检查是否管理员 | ✅ |
 
 ## 管理员功能

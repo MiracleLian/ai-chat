@@ -84,14 +84,26 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import api from '../api'
+import axios from 'axios'
 
 const router = useRouter()
 const loading = ref(false)
 const saved = ref(false)
 
-// 从 localStorage 恢复管理员状态（刷新后保持）
-const adminAuth = ref(!!localStorage.getItem('admin_verified'))
+// 获取管理员 Token
+const adminToken = ref(localStorage.getItem('admin_token') || '')
+
+// 创建专用的 admin axios 实例（使用管理员 Token）
+function adminApi() {
+  return axios.create({
+    baseURL: '/api',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${adminToken.value}`,
+    },
+    timeout: 30000,
+  })
+}
 
 const form = reactive({
   AI_API_URL: '',
@@ -103,7 +115,7 @@ const form = reactive({
 })
 
 onMounted(async () => {
-  if (!localStorage.getItem('admin_verified')) {
+  if (!adminToken.value) {
     router.replace('/')
     return
   }
@@ -112,19 +124,22 @@ onMounted(async () => {
 
 async function loadConfig() {
   try {
-    const { data } = await api.get('/admin/config')
+    const { data } = await adminApi().get('/admin/config')
     Object.assign(form, data)
-  } catch { /* ignore */ }
+  } catch {
+    // Token 过期或其他错误
+    localStorage.removeItem('admin_token')
+    router.replace('/')
+  }
 }
 
 async function handleSave() {
   loading.value = true
   try {
     const payload = { ...form }
-    // Temperature and MaxTokens need to be numbers
     payload.AI_TEMPERATURE = parseFloat(payload.AI_TEMPERATURE)
     payload.AI_MAX_TOKENS = parseInt(payload.AI_MAX_TOKENS)
-    await api.put('/admin/config', payload)
+    await adminApi().put('/admin/config', payload)
     saved.value = true
     ElMessage.success('配置已保存，立即生效！')
     setTimeout(() => (saved.value = false), 3000)
@@ -136,7 +151,7 @@ async function handleSave() {
 }
 
 function handleLogout() {
-  localStorage.removeItem('admin_verified')
+  localStorage.removeItem('admin_token')
   ElMessage.info('已退出管理员模式')
   router.push('/')
 }
